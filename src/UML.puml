@@ -1,0 +1,203 @@
+This is not a "Complete Diagram" but rather an abstract representation of the overall structure
+
+--------------------------------------------------
+SEE: https://plantuml.com/
+     https://plantuml-documentation.readthedocs.io/en/latest/formatting/all-skin-params.html
+--------------------------------------------------
+
+    Quick notes..
+       Solid Line:  --
+       Dotted Line: ..
+       Association/Dependency: >
+       Generalization/Realization (Triangle): |>
+       Composition: *
+       Aggregation: o
+
+        TIP: Don't think of the symbols as UML specific, but rather just ASCII representations of the actual drawings.
+        A <|-- B   (Generalization)
+        A <|.. B   (Realization)
+        A *--  B   (Composition)
+        A o--  B   (Aggregation)
+        A <--  B   (Directional Association)
+        A --   B   (Unspecified Association)
+        A <..  B   (Dependency)
+
+
+
+@startuml
+' double size for better PNG text resolution
+scale 2
+
+
+' change attributes of notes
+skinparam NoteFontSize 10
+skinparam NoteFontName "Arial Narrow"
+skinparam NoteBackgroundColor lightgray
+
+note as GeneralNote
+This is just a rough diagram and is not necessarily "complete"
+this point of this diagram is to be used as a representation
+of the system in its beginning stages, but is subject to
+further refinement.
+end note
+
+
+
+
+
+
+' Real stuff...
+interface Room {
+  + String getRoomAuthor()
+  + String getDescription()
+  + Integer getRoomId()
+  + List<Item> getItems()
+  + void addItem(Item)
+  + boolean removeItem(Item)
+}
+
+abstract class AbstractRoom {
+  # Integer roomId
+  - String description
+  # List<Item> itemList
+  + String getDescription()
+  # void setDescription(String)
+  + List<Item> getItems()
+  + Integer getRoomId()
+  + boolean removeItem(Item)
+  + void addItem(Item)
+
+  + void processInteraction(ItemInteraction,DefaultPlayer)
+}
+
+
+
+
+package Items {
+    interface Item {
+    ~ String getItemDescription()
+    ~ boolean isTransferable()
+    ~ List<String> getAliasList()
+    ~ void interactionEvent(ItemInteraction)
+    }
+
+    class Lamp {
+      description
+    }
+    class MailBox {
+        description
+    }
+}
+
+class Controller.GameController {
+  - GameMap gameMap
+  - Configuration_RoomList rooms
+  - PlayerCharacter player
+  - int moveNumber
+  + String getRoomDescription()
+  + String getRoomDescription(Integer)
+  + void incMoveNumber()
+  + String getItemDescriptions()
+  + String getPlayerInventoryDescription()
+  + String getItemDescriptions(Room)
+  + void movePlayer(Direction)
+  + List<Direction> getExitDirections()
+  + PlayerCharacter getPlayer()
+  + int getMoveNumber()
+  # void setMoveNumber(int)
+  + boolean takeAllItemsFromRoom()
+  + boolean dropAllItemsToRoom()
+  + void DEBUG_JumpToRoom(Integer)
+  + String getPlayerInfo()
+  + String getRoomInfo()
+}
+
+interface PlayerCharacter {
+    - final String playerName;
+    - int currentRoom;
+    - final List<Item> inventory;
+   ~ void addToInventory(Item)
+   ~ int getCurrentRoomId()
+   ~ List<Item> getInventory()
+   ~ String getPlayerName()
+   ~ void removeFromInventory(Item)
+   ~ void setCurrentRoom(int)
+}
+
+class DefaultPlayer {
+   - int currentRoom
+   - List<Item> inventory
+   - String playerName
+   + int getCurrentRoomId()
+   + void setCurrentRoom(int)
+   + List<Item> getInventory()
+   + void addToInventory(Item)
+   + void removeFromInventory(Item)
+   + String getPlayerName()
+   + String toString()
+}
+
+note top of GameMap
+    The <b>GameMap</b> is little more
+    than a thin wrapper around a Java map;
+    it's just a map of lists.
+end note
+
+
+class GameMap {
+    - {static} Direction[] CONNECTION_ORDER
+    - Map<Integer,List<Integer>> map
+    + {static} GameMap getMap()
+    + boolean doesExist(int)
+    + Map<Direction,Integer> getExitConnections(Integer)
+}
+
+interface ItemPossessor {
+~ void addItem(Item)
+~ Optional<Item> removeItem(Item)
+}
+
+class CommandProcessor <<to be designed>>
+
+
+package Creatures {
+    interface  Creature <<to be designed>> {
+        +getDescription()
+    }
+    class Troll {
+        description
+    }
+    class Grue {
+        description
+    }
+}
+
+' Connections
+
+
+Creature <|-- Troll
+Creature <|-- Grue
+
+GameMap <-- Controller.GameController
+GameMap "1" ..> "*" Room : By ID# >
+
+DefaultPlayer ..|> PlayerCharacter
+
+AbstractRoom <|.. Room
+AbstractRoom o-- Creature
+AbstractRoom o-- Item
+
+PlayerCharacter o-- Item
+PlayerCharacter --> Room
+PlayerCharacter ..|> ItemPossessor
+
+Controller.GameController --> PlayerCharacter
+Controller.GameController *-- AbstractRoom
+Controller.GameController --> CommandProcessor :> uses
+
+Room ..|> ItemPossessor
+
+
+Item <|-- Lamp
+Item <|-- MailBox
+@enduml
